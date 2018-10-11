@@ -3,6 +3,7 @@
 const express = require('express');
 const jsonParser = require('body-parser').json;
 const logger = require('morgan');
+const mongoose = require('mongoose');
 const app = express();
 
 // local imports
@@ -13,6 +14,31 @@ app.use(logger('dev'));
 
 // parse incoming requests to json 
 app.use(jsonParser());
+
+// Mongodb connection using mongoose
+mongoose.connect('mongodb://localhost:27017/question-and-answer', {
+    useNewUrlParser: true
+});
+const db = mongoose.connection;
+
+db.on('error', (err) => {
+    console.error('connection error:', err);
+});
+
+db.once('open', () => {
+    console.log('db connection successful!')
+});
+
+// set up interaction with browsers
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    if ( req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'PUT, POST, DELETE');
+        return res.status(200).json({});
+    }
+    next();
+});
 
 // create our routes
 app.use('/questions', route);
@@ -39,5 +65,5 @@ const port = process.env.PORT || 3000;
 
 // run the express server
 app.listen(port, () => {
-    console.log('Express server is listening on port', port);
+    console.log('Express server is listening on localhost:',port);
 });
